@@ -1,3 +1,5 @@
+import { htmlToText } from "html-to-text";
+
 // We need to instantiate some functions which are not directly called, which confuses typescript.
 import { BotCommands, botCommand, compileBotCommands, HelpFunction } from "../BotCommands";
 import { CommandConnection } from "./CommandConnection";
@@ -141,7 +143,13 @@ export class SetupConnection extends CommandConnection {
         const c = await GenericHookConnection.provisionConnection(this.roomId, userId, {name}, this.provisionOpts);
         const url = `${this.config.generic.urlPrefix}${this.config.generic.urlPrefix.endsWith('/') ? '' : '/'}${c.connection.hookId}`;
         const adminRoom = await this.getOrCreateAdminRoom(userId);
-        await adminRoom.sendNotice(md.renderInline(`You have bridged a webhook. Please configure your webhook source to use \`${url}\`.`));
+        const html = md.renderInline(`You have bridged a webhook. Please configure your webhook source to use \`${url}\`.`);
+        await adminRoom.sendHtml({
+            body: htmlToText(html, {wordwrap: false}),
+            msgtype: "m.notice",
+            format: "org.matrix.custom.html",
+            formatted_body: html,
+        });
         return this.as.botClient.sendNotice(this.roomId, `Room configured to bridge webhooks. See admin room for secret url.`);
     }
 
